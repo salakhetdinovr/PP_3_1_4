@@ -1,42 +1,54 @@
 package ru.kata.spring.boot_security.demo.service;
 
-import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import ru.kata.spring.boot_security.demo.dao.UserDao;
 import ru.kata.spring.boot_security.demo.model.User;
-
-import java.util.List;
+import java.util.*;
 
 @Service
+@Transactional
 public class UserServiceImpl implements UserService {
 
-    public final UserDao userDao;
-    @Autowired
+    private final UserDao userDao;
+
+
     public UserServiceImpl(UserDao userDao) {
         this.userDao = userDao;
     }
-    @Override
-    public List<User> getUsers() {
-        return userDao.listUsers();
-    }
 
-    @Override
     public void addUser(User user) {
-        userDao.createUser(user);
+        userDao.addUser(user);
     }
 
-    @Override
-    public void removeUser(User user) {
-        userDao.removeUser(user);
+    public void deleteUser(Long id) {
+        userDao.deleteUser(id);
     }
 
-    @Override
-    public User getUserById(int id) {
+    public void editUser(User user) {
+        userDao.editUser(user);
+    }
+
+    @Transactional(readOnly=true)
+    public User getUserById(Long id) {
         return userDao.getUserById(id);
     }
 
-    @Override
-    public void updateUser(User user) {
-        userDao.updateUser(user);
+    @Transactional(readOnly=true)
+    public List<User> getAllUsers() {
+        return userDao.getAllUsers();
     }
+
+    @Transactional(readOnly=true)
+    @Override
+    public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
+        return userDao.getUserByUsername(username);
+    }
+
+
 }
+
+

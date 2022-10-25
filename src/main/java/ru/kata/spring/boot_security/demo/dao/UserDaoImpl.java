@@ -5,46 +5,53 @@ import ru.kata.spring.boot_security.demo.model.User;
 
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
-import javax.transaction.Transactional;
 import java.util.List;
 
 
 @Repository
-@Transactional
-public class UserDaoImpl implements UserDao{
+public class UserDaoImpl implements UserDao {
 
     @PersistenceContext
     private EntityManager entityManager;
 
     @Override
-    @SuppressWarnings("unchecked")
-    public List<User> listUsers() {
-        return entityManager.createQuery("select u from User u").getResultList();
-    }
-
-    @Override
-    public void createUser(User user) {
+    public void addUser(User user) {
         entityManager.persist(user);
     }
 
     @Override
-    public void removeUser(User user) {
-        entityManager.remove(entityManager.contains(user) ? user : entityManager.merge(user));
+    public void deleteUser(Long id) {
+
+        try {
+            User user = entityManager.find(User.class, id);
+            if (user != null) {
+                entityManager.remove(user);
+            }
+        } catch (NullPointerException e) {
+            System.out.println("User с указанным вами id не существует!");
+        }
     }
 
     @Override
-    public User getUserById(int id) {
-        return entityManager.find(User.class, id);
-    }
-
-    @Override
-    public void updateUser(User user) {
+    public void editUser(User user) {
         entityManager.merge(user);
     }
 
     @Override
-    public User findByUsername(String username) {
-        return null;
+    public User getUserById(Long id) {
+        return entityManager.find(User.class, id);
     }
 
+    @Override
+    public List<User> getAllUsers() {
+        return entityManager.createQuery("select u from User u", User.class)
+                .getResultList();
+    }
+
+    @Override
+    public User getUserByUsername(String username) {
+        return entityManager.createQuery("SELECT u FROM User u JOIN FETCH u.roles WHERE u.username = :username", User.class)
+                .setParameter("username", username)
+                .getSingleResult();
+    }
 }
