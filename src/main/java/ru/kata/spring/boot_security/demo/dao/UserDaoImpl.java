@@ -14,44 +14,31 @@ public class UserDaoImpl implements UserDao {
     @PersistenceContext
     private EntityManager entityManager;
 
-    @Override
-    public void addUser(User user) {
-        entityManager.persist(user);
+    public User findByName(String username) {
+        return entityManager.createQuery("select u from User u join fetch u.roles where u.username = :id", User.class)
+                .setParameter("id", username)
+                .getResultList().stream().findAny().orElse(null);
     }
 
-    @Override
-    public void deleteUser(Long id) {
-
-        try {
-            User user = entityManager.find(User.class, id);
-            if (user != null) {
-                entityManager.remove(user);
-            }
-        } catch (NullPointerException e) {
-            System.out.println("User с указанным вами id не существует!");
-        }
+    public  void delete(Long id) {
+        User user = entityManager.find(User.class, id);
+        entityManager.remove(user);
     }
 
-    @Override
-    public void editUser(User user) {
+    public void update(User user) {
         entityManager.merge(user);
     }
 
-    @Override
-    public User getUserById(Long id) {
+    public boolean add(User user) {
+        entityManager.persist(user);
+        return true;
+    }
+
+    public List<User> listUsers() {
+        return entityManager.createQuery("select s from User s", User.class).getResultList();
+    }
+
+    public User findById(Long id) {
         return entityManager.find(User.class, id);
-    }
-
-    @Override
-    public List<User> getAllUsers() {
-        return entityManager.createQuery("select u from User u", User.class)
-                .getResultList();
-    }
-
-    @Override
-    public User getUserByUsername(String username) {
-        return entityManager.createQuery("SELECT u FROM User u JOIN FETCH u.roles WHERE u.username = :username", User.class)
-                .setParameter("username", username)
-                .getSingleResult();
     }
 }

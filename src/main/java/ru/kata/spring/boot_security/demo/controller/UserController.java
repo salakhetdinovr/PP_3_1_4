@@ -4,21 +4,24 @@ package ru.kata.spring.boot_security.demo.controller;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.ModelMap;
 import org.springframework.web.bind.annotation.*;
+import ru.kata.spring.boot_security.demo.dao.UserDaoImpl;
+import ru.kata.spring.boot_security.demo.model.User;
 import ru.kata.spring.boot_security.demo.service.UserService;
 import java.security.Principal;
 
 
 @Controller
-@RequestMapping("/user")
 public class UserController {
-    private UserService userService;
+    private final UserDaoImpl userDao;
 
-    public UserController(UserService userService) {
-        this.userService = userService;
+    public UserController(UserDaoImpl userDao) {
+        this.userDao = userDao;
     }
-    @GetMapping(value = "/oneUser")
-    public String getUserPage(ModelMap modelMap, Principal principal) {
-        modelMap.addAttribute("user", userService.loadUserByUsername(principal.getName()));
-        return "oneUser";
+
+    @GetMapping(value = "/user")
+    public String print(ModelMap model, Principal principal) {
+        User user = userDao.findByName(principal.getName());
+        model.addAttribute("messages", user);
+        return "user";
     }
 }

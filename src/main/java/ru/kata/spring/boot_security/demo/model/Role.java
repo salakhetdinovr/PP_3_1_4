@@ -17,15 +17,18 @@ public class Role implements GrantedAuthority {
     @Column(name = "username")
     private String role;
 
-    @ManyToMany(mappedBy = "roles")
-    public Set<User> users;
 
+    public String getNoPrefix() {
+        String prefix = "ROLE_";
+        return role.substring(prefix.length());
+    }
 
     public Role() {
     }
 
-    public Role(Long id) {
+    public Role(Long id, String role) {
         this.id = id;
+        this.role = role;
     }
 
     public Role(String role) {
@@ -48,16 +51,9 @@ public class Role implements GrantedAuthority {
         this.role = role;
     }
 
-    public Set<User> getUsers() {
-        return users;
-    }
-
-    public void setUsers(Set<User> users) {
-        this.users = users;
-    }
 
     @Override
     public String getAuthority() {
-        return getRole();
+        return role;
     }
 }

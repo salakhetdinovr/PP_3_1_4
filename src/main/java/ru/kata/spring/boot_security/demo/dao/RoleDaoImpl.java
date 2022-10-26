@@ -12,24 +12,28 @@ public class RoleDaoImpl implements RoleDao {
     @PersistenceContext
     private EntityManager entityManager;
 
-    @Override
-    public void addRole(Role role) {
-        entityManager.persist(role);
+    public boolean add(Role user) {
+        entityManager.persist(user);
+        return true;
     }
 
-    @Override
-    public List<Role> getAllRoles() {
-        return entityManager.createQuery("select r from Role r ", Role.class)
-                .getResultList();
-    }
-
-    @Override
-    public Role getRoleById(Long id) {
+    public Role findByIdRole(Long id) {
         return entityManager.find(Role.class, id);
     }
 
-    @Override
-    public Role getRoleByName(String name) {
-        return entityManager.find(Role.class, name);
+    public List<Role> listRoles() {
+        return entityManager.createQuery("select s from Role s", Role.class).getResultList();
+    }
+
+    public Role findByName(String name) {
+        return entityManager.createQuery("select u from Role u where u.role = :id", Role.class)
+                .setParameter("id", name)
+                .getResultList().stream().findAny().orElse(null);
+    }
+
+    public List<Role> listByName(List<String> name) {
+        return  entityManager.createQuery("select u from Role u where u.role in (:id)", Role.class)
+                .setParameter("id", name)
+                .getResultList();
     }
 }

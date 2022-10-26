@@ -1,85 +1,69 @@
 package ru.kata.spring.boot_security.demo.controller;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import ru.kata.spring.boot_security.demo.model.Role;
 import ru.kata.spring.boot_security.demo.model.User;
-import ru.kata.spring.boot_security.demo.service.RoleServiceImpl;
 import ru.kata.spring.boot_security.demo.service.UserServiceImpl;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
+import java.util.stream.Collectors;
 
 
 @Controller
 @RequestMapping("/admin")
 public class AdminController {
 
+    private final UserServiceImpl userService;
 
-    private UserServiceImpl userService;
-
-    private RoleServiceImpl roleService;
-
-    private BCryptPasswordEncoder passwordEncoder;
-
-    public AdminController(UserServiceImpl userService, RoleServiceImpl roleService, BCryptPasswordEncoder passwordEncoder) {
+    @Autowired
+    public AdminController(UserServiceImpl userService) {
         this.userService = userService;
-        this.roleService = roleService;
-        this.passwordEncoder = passwordEncoder;
     }
 
-    @GetMapping("/allUsers")
-    public String allUsers(@AuthenticationPrincipal User user, Model model){
-        List<User> users = userService.getAllUsers();
-        model.addAttribute("users", users);
+    @GetMapping
+    public String users(Model model) {
+        model.addAttribute("users", userService.listUsers());
+        return "users";
+    }
+
+    @GetMapping("create")
+    public String createUserForm(User user, Model model) {
+        model.addAttribute("roleList", userService.listRoles());
+        return "create";
+    }
+
+    @PostMapping("create")
+    public String createUser(User user) {
+        List<String> listS = user.getRoles().stream().map(Role::getRole).collect(Collectors.toList());
+        List<Role> listR = userService.listByRole(listS);
+        user.setRoles(listR);
+        userService.add(user);
+        return "redirect:/admin";
+    }
+
+    @GetMapping("update/{id}")
+    public String updateUserForm(@PathVariable("id") Long id, Model model) {
+        User user = userService.findById(id);
         model.addAttribute("user", user);
-        model.addAttribute("roles", roleService.getAllRoles());
-
-        return "allUsers";
-    }
-    @GetMapping(value = "create")
-    public String addUser(Model model) {
-        model.addAttribute("user", new User());
-        return "add";
-    }
-    @PostMapping(value = "add")
-    public String createUser(@ModelAttribute("user") User user,
-                             @RequestParam(required=false) String roleAdmin) {
-        Set<Role> roles = new HashSet<>();
-        roles.add(roleService.getRoleById(2L));
-        if (roleAdmin != null && roleAdmin.equals("ROLE_ADMIN")) {
-            roles.add(roleService.getRoleById(1L));
-        }
-        user.setRoles(roles);
-        user.setPassword(passwordEncoder.encode(user.getPassword()));
-        userService.addUser(user);
-
-        return "redirect:/admin/allUsers";
+        model.addAttribute("roleList", userService.listRoles());
+        return "update";
     }
 
-
-    @GetMapping (value = "/edit/{id}")
-    public String editUser(Model model, @PathVariable("id") Long id) {
-        User user = userService.getUserById(id);
-        model.addAttribute("user", user);
-        return "edit";
-    }
-    @PatchMapping (value = "/edit/{id}")
-    public String userUpdate(@ModelAttribute("user") User user) {
-        user.setPassword(passwordEncoder.encode(user.getPassword()));
-        userService.editUser(user);
-        return "redirect:/admin/allUsers";
+    @PostMapping("update")
+    public String updateUser(User user) {
+        List<String> listS = user.getRoles().stream().map(Role::getRole).collect(Collectors.toList());
+        List<Role> listR = userService.listByRole(listS);
+        user.setRoles(listR);
+        userService.update(user);
+        return "redirect:/admin";
     }
 
-
-
-    @DeleteMapping ("{id}")
-    public String delete(@PathVariable("id") Long id){
-        userService.deleteUser(id);
-        return "redirect:/admin/allUsers";
+    @GetMapping("delete/{id}")
+    public String deleteUser(@PathVariable("id") Long id) {
+        userService.delete(id);
+        return "redirect:/admin";
     }
 }
