@@ -7,38 +7,42 @@ import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
 import java.util.List;
 
-
 @Repository
 public class UserDaoImpl implements UserDao {
 
     @PersistenceContext
     private EntityManager entityManager;
 
-    public User findByName(String username) {
-        return entityManager.createQuery("select u from User u join fetch u.roles where u.username = :id", User.class)
-                .setParameter("id", username)
-                .getResultList().stream().findAny().orElse(null);
+    @Override
+    public List<User> getAllUsers() {
+        String JPAql = "SELECT user FROM User user";
+        return entityManager.createQuery(JPAql, User.class).getResultList();
     }
 
-    public  void delete(Long id) {
-        User user = entityManager.find(User.class, id);
-        entityManager.remove(user);
+    @Override
+    public void create(User user) {
+        entityManager.persist(user);
     }
 
+    @Override
+    public User getUserById(Long id) {
+        return entityManager.find(User.class, id);
+    }
+
+    @Override
+    public void delete(Long id) {
+        String JPAql = "DELETE FROM User user WHERE user.id = :id";
+        entityManager.createQuery(JPAql).setParameter("id", id).executeUpdate();
+    }
+
+    @Override
     public void update(User user) {
         entityManager.merge(user);
     }
 
-    public boolean add(User user) {
-        entityManager.persist(user);
-        return true;
-    }
-
-    public List<User> listUsers() {
-        return entityManager.createQuery("select s from User s", User.class).getResultList();
-    }
-
-    public User findById(Long id) {
-        return entityManager.find(User.class, id);
+    @Override
+    public User findByUsername(String username) {
+        String JPAql = "SELECT u from User u join fetch u.roles where u.username = :username";
+        return entityManager.createQuery(JPAql, User.class).setParameter("username", username).getSingleResult();
     }
 }
